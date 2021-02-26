@@ -1,11 +1,13 @@
+from concurrent import futures
 from dataclasses import dataclass
-from pprint import pprint
+import logging
+import pprint
 import threading
 
-import flask
-
-
-app = flask.Flask(__name__)
+import grpc
+from google.protobuf import empty_pb2
+import tmux_pb2
+import tmux_pb2_grpc
 
 
 @dataclass(frozen=True)
@@ -29,12 +31,8 @@ class TmuxSession:
 XWindowId = int
 
 
-##
-# TmuxClientXWindowIdMap
-#
-
-# TODO: Is it thread-safe?
 class TmuxClientXWindowIdMap:
+    """Maintains a mapping from a X Window ID to a tmux client."""
 
     def __init__(self):
         self._map = {}
@@ -51,34 +49,13 @@ class TmuxClientXWindowIdMap:
     def __contains__(self, x_window_id: XWindowId) -> bool:
         return x_window_id in self._map
 
+    def __repr__(self):
+        rpr = pprint.pformat({
+            k: v.client_name
+            for k, v in self._map.items()
+        })
+        return f'{self.__class__.__name__}({rpr})'
 
-tmux_client_x_window_id_map = TmuxClientXWindowIdMap()
-
-
-@app.route('/tmux/set_client_for_x_window_id', methods=['POST'])
-def tmux_set_client_fox_x_window_id():
-    data = flask.request.get_json()
-    client = TmuxClient(hostname=data['hostname'],
-                        client_name=data['client_name'])
-    x_window_id = data['x_window_id']
-    tmux_client_x_window_id_map[x_window_id] = client
-    return ''
-
-
-@app.route('/tmux/clear_client_for_x_window_id', methods=['POST'])
-def tmux_clear_client_fox_x_window_id():
-    data = flask.request.get_json()
-    x_window_id = data['x_window_id']
-    try:
-        del tmux_client_x_window_id_map[x_window_id]
-    except KeyError:
-        pass
-    return ''
-
-
-##
-# TmuxClientSessionMap
-#
 
 class TmuxClientSessionMap:
     """Maintains a mapping from a tmux client to a tmux session."""
@@ -129,83 +106,109 @@ class TmuxClientSessionMap:
             for client in clients_to_update:
                 del self._map[client]
 
-
-# TODO: Implement lock-forcing API:
-# with tmux_client_session_map.lock() as locked_map:
-#   for k in locked_map.keys(): ...
-#   locked_map[...] = ...
-# locked_map = tmux_client_session_map.lock
-
-
-tmux_client_session_map = TmuxClientSessionMap()
+    def __repr__(self):
+        rpr = pprint.pformat({
+            k.client_name: v.session_name
+            for k, v in self._map.items()
+        })
+        return f'{self.__class__.__name__}({rpr})'
 
 
-def dump():
-    print()
-    pprint({
-        k.client_name: v.session_name
-        for k, v in tmux_client_session_map._map.items()
-    })
+class Tmux(tmux_pb2_grpc.TmuxServicer):
 
+    def __init__(self, tmux_client_x_window_id_map, tmux_client_session_map):
+        self._tmux_client_x_window_id_map = tmux_client_x_window_id_map
+        self._tmux_client_session_map = tmux_client_session_map
 
-@app.route('/tmux/client_session_changed', methods=['POST'])
-def tmux_client_session_changed():
-    data = flask.request.get_json()
-    client = TmuxClient(hostname=data['hostname'],
-                        client_name=data['client_name'])
-    session = TmuxSession(hostname=data['hostname'],
-                          server_pid=data['server_pid'],
-                          session_name=data['session_name'])
+    ##
+    # Methods for maintaining X Window ID ↔ tmux client mapping.
 
-    tmux_client_session_map[client] = session
-    dump()
-    return ''
+    def set_client_for_x_window_id(self, request, context):
+        client = TmuxClient(hostname=request.hostname,
+                            client_name=request.client_name)
+        self._tmux_client_x_window_id_map[request.x_window_id] = client
+        print(self._tmux_client_x_window_id_map)
+        return empty_pb2.Empty()
 
+    def clear_client_for_x_window_id(self, request, context):
+        try:
+            del self._tmux_client_x_window_id_map[request.x_window_id]
+        except KeyError:
+            pass
+        # The client will also be detached from any sessions.
+        try:
+            del self._tmux_client_session_map[client]
+        except KeyError:
+            pass
+        print(self._tmux_client_x_window_id_map)
+        print(self._tmux_client_session_map)
+        return empty_pb2.Empty()
 
-@app.route('/tmux/client_detached', methods=['POST'])
-def tmux_client_detached():
-    data = flask.request.get_json()
-    client = TmuxClient(hostname=data['hostname'],
-                        client_name=data['client_name'])
-    print('tmux_client_detached:', client)
+    ##
+    # Methods for maintaining tmux client ↔ session mapping.
 
-    try:
-        del tmux_client_session_map[client]
-    except KeyError:
-        pass
-    dump()
-    return ''
+    def client_session_changed(self, request, context):
+        client = TmuxClient(hostname=request.hostname,
+                            client_name=request.client_name)
+        session = TmuxSession(hostname=request.hostname,
+                              server_pid=request.server_pid,
+                              session_name=request.session_name)
 
+        self._tmux_client_session_map[client] = session
+        print(self._tmux_client_session_map)
+        return empty_pb2.Empty()
 
-@app.route('/tmux/session_renamed', methods=['POST'])
-def tmux_session_renamed():
-    data = flask.request.get_json()
-    client = TmuxClient(hostname=data['hostname'],
-                        client_name=data['client_name'])
-    new_session = TmuxSession(hostname=data['hostname'],
-                              server_pid=data['server_pid'],
-                              session_name=data['new_session_name'])
+    def client_detached(self, request, context):
+        client = TmuxClient(hostname=data['hostname'],
+                            client_name=data['client_name'])
+        print('tmux_client_detached:', client)
 
-    tmux_client_session_map.session_renamed(client, new_session)
-    dump()
-    return ''
+        try:
+            del self._tmux_client_session_map[client]
+        except KeyError:
+            pass
+        print(self._tmux_client_session_map)
+        return empty_pb2.Empty()
 
+    def session_renamed(self, request, context):
+        client = TmuxClient(hostname=request.hostname,
+                            client_name=request.client_name)
+        new_session = TmuxSession(hostname=request.hostname,
+                                  server_pid=request.server_pid,
+                                  session_name=request.new_session_name)
 
-@app.route('/tmux/session_closed', methods=['POST'])
-def tmux_session_closed():
-    data = flask.request.get_json()
-    session = TmuxSession(hostname=data['hostname'],
-                          server_pid=data['server_pid'],
-                          session_name=data['session_name'])
-    print('tmux_session_closed:', session)
+        self._tmux_client_session_map.session_renamed(client, new_session)
+        print(self._tmux_client_session_map)
+        return empty_pb2.Empty()
 
-    tmux_client_session_map.session_closed(session)
-    dump()
-    return ''
+    def session_closed(self, request, context):
+        session = TmuxSession(hostname=request.hostname,
+                              server_pid=request.server_pid,
+                              session_name=request.session_name)
+        print('tmux_session_closed:', session)
+
+        self._tmux_client_session_map.session_closed(session)
+        print(self._tmux_client_session_map)
+        return empty_pb2.Empty()
 
 
 def main():
-    app.run(port=3141)  # TODO: run it a thread.
+    logging.basicConfig()
+
+    tmux_client_x_window_id_map = TmuxClientXWindowIdMap()
+    tmux_client_session_map = TmuxClientSessionMap()
+
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    tmux_pb2_grpc.add_TmuxServicer_to_server(
+            Tmux(
+                tmux_client_x_window_id_map,
+                tmux_client_session_map,
+            ),
+            server
+    )
+    server.add_insecure_port('[::]:3141')
+    server.start()
+    server.wait_for_termination()
 
 
 if __name__ == '__main__':

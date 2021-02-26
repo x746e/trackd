@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+package trackd;
+
+service Tmux {
+  // Methods for maintaining X Window ID ↔ tmux client mapping.
+  rpc set_client_for_x_window_id(SetClientForXWindowIdRequest)
+      returns (google.protobuf.Empty);
+  rpc clear_client_for_x_window_id(ClearClientForXWindowIdRequest)
+      returns (google.protobuf.Empty);
+
+  // Methods for maintaining tmux client ↔ session mapping.
+  rpc client_session_changed(ClientSessionChangedRequest)
+      returns (google.protobuf.Empty);
+  rpc client_detached(ClientDetachedRequest)
+      returns (google.protobuf.Empty);
+  rpc session_renamed(SessionRenamedRequest)
+      returns (google.protobuf.Empty);
+  rpc session_closed(SessionClosedRequest)
+      returns (google.protobuf.Empty);
+}
+
+message SetClientForXWindowIdRequest {
+  string hostname = 1;
+  string client_name = 2;
+  int64 x_window_id = 3; 
+}
+
+message ClearClientForXWindowIdRequest {
+  int64 x_window_id = 1; 
+}
+
+message ClientSessionChangedRequest {
+  string hostname = 1;
+  string client_name = 2;
+  int64 server_pid = 3;
+  string session_name = 4;
+}
+
+message ClientDetachedRequest {
+  string hostname = 1;
+  string client_name = 2;
+}
+
+message SessionRenamedRequest {
+  string hostname = 1;
+  string client_name = 2;
+  int64 server_pid = 3;
+  string new_session_name = 4;
+}
+
+message SessionClosedRequest {
+  string hostname = 1;
+  int64 server_pid = 2;
+  string session_name = 3;
+}
