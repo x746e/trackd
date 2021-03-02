@@ -5,7 +5,7 @@ X_WINDOW_ID="$(xdotool getwindowfocus)"
 # Fail if it's not.  Allow ignoring with a flag.
 
 ./trackctl.sh tmux set-client-for-x-window-id \
-    --hostname "$(hostname -f)" \
+    --hostname "$(hostname)" \
     --client_name "$(tty)" \
     --x_window_id "$X_WINDOW_ID"
 
