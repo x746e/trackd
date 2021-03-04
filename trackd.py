@@ -26,6 +26,7 @@ class TmuxClient:
     client_name: str
 
 
+# TODO: Merge with TmuxSession
 @dataclass(frozen=True)
 class Session:
     session_name: str
@@ -38,14 +39,17 @@ class TmuxSession(Session):
     server_pid: int
 
 
+# TODO: Remove.
 @dataclass(frozen=True)
 class ChromeSession(Session):
     pass
 
 
-# TODO: Rename to XWindowTmuxClientMap
-class TmuxClientXWindowIdMap:
-    """Maintains a mapping from a X Window ID to a tmux client."""
+class XWindowIdTmuxClientMap:
+    """Maintains a mapping from a X Window ID to a tmux client.
+
+    Thread-unsafe.
+    """
 
     def __init__(self):
         self._map = {}
@@ -120,11 +124,12 @@ class TmuxClientSessionMap:
                 del self._map[client]
 
     def __repr__(self):
-        rpr = pprint.pformat({
-            k.client_name: f'{v.hostname}:{v.session_name}'
-            for k, v in self._map.items()
-        })
-        return f'{self.__class__.__name__}({rpr})'
+        with self._lock:
+            rpr = pprint.pformat({
+                k.client_name: f'{v.hostname}:{v.session_name}'
+                for k, v in self._map.items()
+            })
+            return f'{self.__class__.__name__}({rpr})'
 
 
 @dataclass(frozen=True)
@@ -158,69 +163,70 @@ class SpanTracker:
         self._active_span_start = now()
 
     def _emit(self) -> None:
+        span = self._make_span()
+        print(span)
+
+    def _make_span(self) -> Span:
         assert self._active_span_name is not None
         assert self._active_span_start is not None
-        span = Span(
+        return Span(
                 start=self._active_span_start,
                 end=now(),
                 name=self._active_span_name,
         )
-        print(span)
+
 
 
 class TmuxAdapter:
 
     def __init__(self, span_tracker: SpanTracker):
-        self._tmux_client_x_window_id_map = TmuxClientXWindowIdMap()
+        self._x_window_id_tmux_client_map = XWindowIdTmuxClientMap()
         self._tmux_client_session_map = TmuxClientSessionMap()
         self._lock = threading.Lock()
         self._span_tracker = span_tracker
         self._focused_x_window_id: Optional[x11.XWindowId] = None
 
-    def set_focused_x_window_id(self, x_window_id: x11.XWindowId) -> None:
-        with self._lock:
-            print(f'set_focused_x_window_id({x_window_id})')
-            self._focused_x_window_id = x_window_id
-            self._check_span()
-
     def _check_span(self):
-        if self._focused_x_window_id not in self._tmux_client_x_window_id_map:
+        if self._focused_x_window_id not in self._x_window_id_tmux_client_map:
             self._span_tracker.update_active_span(None)
             return
-        client = self._tmux_client_x_window_id_map[self._focused_x_window_id]
+        client = self._x_window_id_tmux_client_map[self._focused_x_window_id]
 
         if client not in self._tmux_client_session_map:
             self._span_tracker.update_active_span(None)
             return
         session = self._tmux_client_session_map[client]
 
-        print('_check_span:', session)
         self._span_tracker.update_active_span(session.session_name)
+
+    def set_focused_x_window_id(self, x_window_id: x11.XWindowId) -> None:
+        with self._lock:
+            self._focused_x_window_id = x_window_id
+            self._check_span()
 
     ##
     # Methods for maintaining X Window ID ↔ tmux client mapping.
 
     def set_client_for_x_window_id(self, x_window_id: x11.XWindowId, client: TmuxClient) -> None:
         with self._lock:
-            self._tmux_client_x_window_id_map[x_window_id] = client
-            print(self._tmux_client_x_window_id_map)
+            self._x_window_id_tmux_client_map[x_window_id] = client
+            # TODO: At this point the client shouldn't have a corresponding TmuxSession.
+            # If it does we should raise a "surprise alert" here.
             self._check_span()
 
     def clear_client_for_x_window_id(self, x_window_id: x11.XWindowId) -> None:
         with self._lock:
             try:
-                client = self._tmux_client_x_window_id_map[x_window_id]
+                client = self._x_window_id_tmux_client_map[x_window_id]
             except KeyError:
                 pass
             else:
-                del self._tmux_client_x_window_id_map[x_window_id]
+                del self._x_window_id_tmux_client_map[x_window_id]
                 # The client will also be detached from any sessions.
                 try:
                     del self._tmux_client_session_map[client]
                 except KeyError:
                     pass
-            print(self._tmux_client_x_window_id_map)
-            print(self._tmux_client_session_map)
             self._check_span()
 
     ##
@@ -229,32 +235,24 @@ class TmuxAdapter:
     def client_session_changed(self, client: TmuxClient, session: TmuxSession) -> None:
         with self._lock:
             self._tmux_client_session_map[client] = session
-            print(self._tmux_client_session_map)
             self._check_span()
 
     def client_detached(self, client: TmuxClient) -> None:
         with self._lock:
-            print('tmux_client_detached:', client)
-
             try:
                 del self._tmux_client_session_map[client]
             except KeyError:
                 pass
-            print(self._tmux_client_session_map)
             self._check_span()
 
     def session_renamed(self, client: TmuxClient, new_session: TmuxSession) -> None:
         with self._lock:
             self._tmux_client_session_map.session_renamed(client, new_session)
-            print(self._tmux_client_session_map)
             self._check_span()
 
     def session_closed(self, session: TmuxSession) -> None:
         with self._lock:
-            print('tmux_session_closed:', session)
-
             self._tmux_client_session_map.session_closed(session)
-            print(self._tmux_client_session_map)
             self._check_span()
 
 

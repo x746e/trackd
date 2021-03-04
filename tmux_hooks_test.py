@@ -189,3 +189,7 @@ set-hook -g %(hook)s "run-shell 'echo -e ''%(log_record)s'' >> %(log_file)s'"
         with open(self.log_file, 'rt') as f:
             actual = f.read()
         self.assertEqual(expected.strip(), actual.strip())
+
+
+if __name__ == '__main__':
+    unittest.main()
