@@ -3,7 +3,8 @@ import unittest
 from unittest import mock
 
 import trackd
-from trackd import SpanTracker, TmuxClient, TmuxClientSessionMap, TmuxSession, TmuxAdapter
+from trackd import SpanTracker
+from tmux import TmuxClient, TmuxClientSessionMap, TmuxSession, TmuxAdapter
 
 
 class TmuxClientSessionMapTest(unittest.TestCase):
