@@ -26,23 +26,12 @@ class TmuxClient:
     client_name: str
 
 
-# TODO: Merge with TmuxSession
 @dataclass(frozen=True)
-class Session:
-    session_name: str
-
-
-@dataclass(frozen=True)
-class TmuxSession(Session):
+class TmuxSession:
     """Tmux sessions are represented by tmux server PID + session name."""
+    session_name: str
     hostname: str
     server_pid: int
-
-
-# TODO: Remove.
-@dataclass(frozen=True)
-class ChromeSession(Session):
-    pass
 
 
 class XWindowIdTmuxClientMap:
@@ -174,7 +163,6 @@ class SpanTracker:
                 end=now(),
                 name=self._active_span_name,
         )
-
 
 
 class TmuxAdapter:
