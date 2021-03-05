@@ -1,2 +1,3 @@
 grpc-web/
 trackd-venv/
+spans.db

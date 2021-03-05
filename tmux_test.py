@@ -43,20 +43,20 @@ class TmuxClientSessionMapTest(unittest.TestCase):
         self.assertNotIn(client_bar, session_map)
 
 
-class FakeSpanTracker(SpanTracker):
+class FakeSpanStorage:
 
     def __init__(self):
-        super().__init__()
         self.spans = []
 
-    def _emit(self):
-        self.spans.append(self._make_span())
+    def add(self, span):
+        self.spans.append(span)
 
 
 class TmuxAdapterTest(unittest.TestCase):
 
     def setUp(self):
-        self.span_tracker = FakeSpanTracker()
+        self.span_storage = FakeSpanStorage()
+        self.span_tracker = SpanTracker(self.span_storage)
         self.adapter = TmuxAdapter(self.span_tracker)
         self.now_patcher = mock.patch.object(trackd, 'now')
         self.now = self.now_patcher.start()
@@ -84,9 +84,9 @@ class TmuxAdapterTest(unittest.TestCase):
         self.adapter.session_closed(session)
 
         # Check the Span is there, and has the right name and duration.
-        self.assertEqual(len(self.span_tracker.spans), 1)
-        (span,) = self.span_tracker.spans
-        self.assertEqual(span.name, session.session_name)
+        self.assertEqual(len(self.span_storage.spans), 1)
+        (span,) = self.span_storage.spans
+        self.assertEqual(span.span_name, session.session_name)
         self.assertEqual((span.end - span.start).total_seconds(), duration)
 
     def test_session_renamed(self):
@@ -106,9 +106,9 @@ class TmuxAdapterTest(unittest.TestCase):
         self.adapter.session_renamed(client, renamed_session)
 
         # Check the Span is there, and has the right name and duration.
-        self.assertEqual(len(self.span_tracker.spans), 1)
-        (span,) = self.span_tracker.spans
-        self.assertEqual(span.name, session.session_name)
+        self.assertEqual(len(self.span_storage.spans), 1)
+        (span,) = self.span_storage.spans
+        self.assertEqual(span.span_name, session.session_name)
         self.assertEqual((span.end - span.start).total_seconds(), duration)
 
     def test_client_detached(self):
@@ -127,9 +127,9 @@ class TmuxAdapterTest(unittest.TestCase):
         self.adapter.client_detached(client)
 
         # Check the Span is there, and has the right name and duration.
-        self.assertEqual(len(self.span_tracker.spans), 1)
-        (span,) = self.span_tracker.spans
-        self.assertEqual(span.name, session.session_name)
+        self.assertEqual(len(self.span_storage.spans), 1)
+        (span,) = self.span_storage.spans
+        self.assertEqual(span.span_name, session.session_name)
         self.assertEqual((span.end - span.start).total_seconds(), duration)
 
     def test_client_session_changed(self):
@@ -149,9 +149,9 @@ class TmuxAdapterTest(unittest.TestCase):
         self.adapter.client_session_changed(client, second_session)
 
         # Check the Span is there, and has the right name and duration.
-        self.assertEqual(len(self.span_tracker.spans), 1)
-        (span,) = self.span_tracker.spans
-        self.assertEqual(span.name, first_session.session_name)
+        self.assertEqual(len(self.span_storage.spans), 1)
+        (span,) = self.span_storage.spans
+        self.assertEqual(span.span_name, first_session.session_name)
         self.assertEqual((span.end - span.start).total_seconds(), duration)
 
     def test_clear_client_for_x_window_id(self):
@@ -170,9 +170,9 @@ class TmuxAdapterTest(unittest.TestCase):
         self.adapter.clear_client_for_x_window_id(x_window_id)
 
         # Check the Span is there, and has the right name and duration.
-        self.assertEqual(len(self.span_tracker.spans), 1)
-        (span,) = self.span_tracker.spans
-        self.assertEqual(span.name, session.session_name)
+        self.assertEqual(len(self.span_storage.spans), 1)
+        (span,) = self.span_storage.spans
+        self.assertEqual(span.span_name, session.session_name)
         self.assertEqual((span.end - span.start).total_seconds(), duration)
 
     def test_set_focused_x_window_id(self):
@@ -191,9 +191,9 @@ class TmuxAdapterTest(unittest.TestCase):
         self.adapter.set_focused_x_window_id(x_window_id - 1)
 
         # Check the Span is there, and has the right name and duration.
-        self.assertEqual(len(self.span_tracker.spans), 1)
-        (span,) = self.span_tracker.spans
-        self.assertEqual(span.name, session.session_name)
+        self.assertEqual(len(self.span_storage.spans), 1)
+        (span,) = self.span_storage.spans
+        self.assertEqual(span.span_name, session.session_name)
         self.assertEqual((span.end - span.start).total_seconds(), duration)
 
 
