@@ -12,6 +12,7 @@ import absl.logging
 import grpc
 import tzlocal
 
+import chrome
 import tmux
 import tmux_pb2_grpc
 import x11
@@ -125,6 +126,11 @@ def main():
 
     span_storage = SpanStorage('spans.db')
     span_tracker = SpanTracker(span_storage)
+
+    chrome_servicer = chrome.Chrome(span_tracker)
+    chrome_thread = threading.Thread(target=chrome.serve, args=(chrome_servicer,), daemon=True)
+    chrome_thread.start()
+
     tmux_adapter = tmux.TmuxAdapter(span_tracker)
 
     x_window_focus_tracker = x11.XWindowFocusTracker()
@@ -132,10 +138,10 @@ def main():
     x_thread = threading.Thread(target=x_window_focus_tracker.run, daemon=True)
     x_thread.start()
 
-    servicer = tmux.Tmux(tmux_adapter)
+    tmux_servicer = tmux.Tmux(tmux_adapter)
 
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    tmux_pb2_grpc.add_TmuxServicer_to_server(servicer, server)
+    tmux_pb2_grpc.add_TmuxServicer_to_server(tmux_servicer, server)
     server.add_insecure_port('[::]:3141')
     server.start()
     server.wait_for_termination()
