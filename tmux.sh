@@ -1,6 +1,13 @@
 #!/bin/sh
 
-X_WINDOW_ID="$(xdotool getwindowfocus)"
+set -o errexit
+
+if [[ -n "$LC_TRACKD_X_WINDOW_ID" ]]; then
+  X_WINDOW_ID="$LC_TRACKD_X_WINDOW_ID"
+else
+  X_WINDOW_ID="$(xdotool getwindowfocus)"
+fi
+
 # TODO: Check that window is indeed a terminal.
 # Fail if it's not.  Allow ignoring with a flag.
 
