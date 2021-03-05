@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+package trackd;
+
+service Chrome {
+    rpc session_changed(SessionChangedRequest) returns (google.protobuf.Empty);
+}
+
+message SessionChangedRequest {
+    string session_name = 1;
+}

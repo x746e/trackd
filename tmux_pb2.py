@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\ntmux.proto\x12\x06trackd\x1a\x1bgoogle/protobuf/empty.proto\"Z\n\x1cSetClientForXWindowIdRequest\x12\x10\n\x08hostname\x18\x01 \x01(\t\x12\x13\n\x0b\x63lient_name\x18\x02 \x01(\t\x12\x13\n\x0bx_window_id\x18\x03 \x01(\x03\"\x1f\n\x1dSetClientForXWindowIdResponse\"5\n\x1e\x43learClientForXWindowIdRequest\x12\x13\n\x0bx_window_id\x18\x01 \x01(\x03\"!\n\x1f\x43learClientForXWindowIdResponse\"n\n\x1b\x43lientSessionChangedRequest\x12\x10\n\x08hostname\x18\x01 \x01(\t\x12\x13\n\x0b\x63lient_name\x18\x02 \x01(\t\x12\x12\n\nserver_pid\x18\x03 \x01(\x03\x12\x14\n\x0csession_name\x18\x04 \x01(\t\"\x1e\n\x1c\x43lientSessionChangedResponse\">\n\x15\x43lientDetachedRequest\x12\x10\n\x08hostname\x18\x01 \x01(\t\x12\x13\n\x0b\x63lient_name\x18\x02 \x01(\t\"\x18\n\x16\x43lientDetachedResponse\"l\n\x15SessionRenamedRequest\x12\x10\n\x08hostname\x18\x01 \x01(\t\x12\x13\n\x0b\x63lient_name\x18\x02 \x01(\t\x12\x12\n\nserver_pid\x18\x03 \x01(\x03\x12\x18\n\x10new_session_name\x18\x04 \x01(\t\"\x18\n\x16SessionRenamedResponse\"R\n\x14SessionClosedRequest\x12\x10\n\x08hostname\x18\x01 \x01(\t\x12\x12\n\nserver_pid\x18\x02 \x01(\x03\x12\x14\n\x0csession_name\x18\x03 \x01(\t\"\x17\n\x15SessionClosedResponse2\xf5\x03\n\x04Tmux\x12Z\n\x1aset_client_for_x_window_id\x12$.trackd.SetClientForXWindowIdRequest\x1a\x16.google.protobuf.Empty\x12^\n\x1c\x63lear_client_for_x_window_id\x12&.trackd.ClearClientForXWindowIdRequest\x1a\x16.google.protobuf.Empty\x12U\n\x16\x63lient_session_changed\x12#.trackd.ClientSessionChangedRequest\x1a\x16.google.protobuf.Empty\x12H\n\x0f\x63lient_detached\x12\x1d.trackd.ClientDetachedRequest\x1a\x16.google.protobuf.Empty\x12H\n\x0fsession_renamed\x12\x1d.trackd.SessionRenamedRequest\x1a\x16.google.protobuf.Empty\x12\x46\n\x0esession_closed\x12\x1c.trackd.SessionClosedRequest\x1a\x16.google.protobuf.Emptyb\x06proto3'
+  serialized_pb=b'\n\ntmux.proto\x12\x06trackd\x1a\x1bgoogle/protobuf/empty.proto\"Z\n\x1cSetClientForXWindowIdRequest\x12\x10\n\x08hostname\x18\x01 \x01(\t\x12\x13\n\x0b\x63lient_name\x18\x02 \x01(\t\x12\x13\n\x0bx_window_id\x18\x03 \x01(\x03\"5\n\x1e\x43learClientForXWindowIdRequest\x12\x13\n\x0bx_window_id\x18\x01 \x01(\x03\"n\n\x1b\x43lientSessionChangedRequest\x12\x10\n\x08hostname\x18\x01 \x01(\t\x12\x13\n\x0b\x63lient_name\x18\x02 \x01(\t\x12\x12\n\nserver_pid\x18\x03 \x01(\x03\x12\x14\n\x0csession_name\x18\x04 \x01(\t\">\n\x15\x43lientDetachedRequest\x12\x10\n\x08hostname\x18\x01 \x01(\t\x12\x13\n\x0b\x63lient_name\x18\x02 \x01(\t\"l\n\x15SessionRenamedRequest\x12\x10\n\x08hostname\x18\x01 \x01(\t\x12\x13\n\x0b\x63lient_name\x18\x02 \x01(\t\x12\x12\n\nserver_pid\x18\x03 \x01(\x03\x12\x18\n\x10new_session_name\x18\x04 \x01(\t\"R\n\x14SessionClosedRequest\x12\x10\n\x08hostname\x18\x01 \x01(\t\x12\x12\n\nserver_pid\x18\x02 \x01(\x03\x12\x14\n\x0csession_name\x18\x03 \x01(\t2\xf5\x03\n\x04Tmux\x12Z\n\x1aset_client_for_x_window_id\x12$.trackd.SetClientForXWindowIdRequest\x1a\x16.google.protobuf.Empty\x12^\n\x1c\x63lear_client_for_x_window_id\x12&.trackd.ClearClientForXWindowIdRequest\x1a\x16.google.protobuf.Empty\x12U\n\x16\x63lient_session_changed\x12#.trackd.ClientSessionChangedRequest\x1a\x16.google.protobuf.Empty\x12H\n\x0f\x63lient_detached\x12\x1d.trackd.ClientDetachedRequest\x1a\x16.google.protobuf.Empty\x12H\n\x0fsession_renamed\x12\x1d.trackd.SessionRenamedRequest\x1a\x16.google.protobuf.Empty\x12\x46\n\x0esession_closed\x12\x1c.trackd.SessionClosedRequest\x1a\x16.google.protobuf.Emptyb\x06proto3'
   ,
   dependencies=[google_dot_protobuf_dot_empty__pb2.DESCRIPTOR,])
 
@@ -73,31 +73,6 @@ _SETCLIENTFORXWINDOWIDREQUEST = _descriptor.Descriptor(
 )
 
 
-_SETCLIENTFORXWINDOWIDRESPONSE = _descriptor.Descriptor(
-  name='SetClientForXWindowIdResponse',
-  full_name='trackd.SetClientForXWindowIdResponse',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  create_key=_descriptor._internal_create_key,
-  fields=[
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=143,
-  serialized_end=174,
-)
-
-
 _CLEARCLIENTFORXWINDOWIDREQUEST = _descriptor.Descriptor(
   name='ClearClientForXWindowIdRequest',
   full_name='trackd.ClearClientForXWindowIdRequest',
@@ -125,33 +100,8 @@ _CLEARCLIENTFORXWINDOWIDREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=176,
-  serialized_end=229,
-)
-
-
-_CLEARCLIENTFORXWINDOWIDRESPONSE = _descriptor.Descriptor(
-  name='ClearClientForXWindowIdResponse',
-  full_name='trackd.ClearClientForXWindowIdResponse',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  create_key=_descriptor._internal_create_key,
-  fields=[
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=231,
-  serialized_end=264,
+  serialized_start=143,
+  serialized_end=196,
 )
 
 
@@ -203,33 +153,8 @@ _CLIENTSESSIONCHANGEDREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=266,
-  serialized_end=376,
-)
-
-
-_CLIENTSESSIONCHANGEDRESPONSE = _descriptor.Descriptor(
-  name='ClientSessionChangedResponse',
-  full_name='trackd.ClientSessionChangedResponse',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  create_key=_descriptor._internal_create_key,
-  fields=[
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=378,
-  serialized_end=408,
+  serialized_start=198,
+  serialized_end=308,
 )
 
 
@@ -267,33 +192,8 @@ _CLIENTDETACHEDREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=410,
-  serialized_end=472,
-)
-
-
-_CLIENTDETACHEDRESPONSE = _descriptor.Descriptor(
-  name='ClientDetachedResponse',
-  full_name='trackd.ClientDetachedResponse',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  create_key=_descriptor._internal_create_key,
-  fields=[
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=474,
-  serialized_end=498,
+  serialized_start=310,
+  serialized_end=372,
 )
 
 
@@ -345,33 +245,8 @@ _SESSIONRENAMEDREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=500,
-  serialized_end=608,
-)
-
-
-_SESSIONRENAMEDRESPONSE = _descriptor.Descriptor(
-  name='SessionRenamedResponse',
-  full_name='trackd.SessionRenamedResponse',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  create_key=_descriptor._internal_create_key,
-  fields=[
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=610,
-  serialized_end=634,
+  serialized_start=374,
+  serialized_end=482,
 )
 
 
@@ -416,47 +291,16 @@ _SESSIONCLOSEDREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=636,
-  serialized_end=718,
-)
-
-
-_SESSIONCLOSEDRESPONSE = _descriptor.Descriptor(
-  name='SessionClosedResponse',
-  full_name='trackd.SessionClosedResponse',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  create_key=_descriptor._internal_create_key,
-  fields=[
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=720,
-  serialized_end=743,
+  serialized_start=484,
+  serialized_end=566,
 )
 
 DESCRIPTOR.message_types_by_name['SetClientForXWindowIdRequest'] = _SETCLIENTFORXWINDOWIDREQUEST
-DESCRIPTOR.message_types_by_name['SetClientForXWindowIdResponse'] = _SETCLIENTFORXWINDOWIDRESPONSE
 DESCRIPTOR.message_types_by_name['ClearClientForXWindowIdRequest'] = _CLEARCLIENTFORXWINDOWIDREQUEST
-DESCRIPTOR.message_types_by_name['ClearClientForXWindowIdResponse'] = _CLEARCLIENTFORXWINDOWIDRESPONSE
 DESCRIPTOR.message_types_by_name['ClientSessionChangedRequest'] = _CLIENTSESSIONCHANGEDREQUEST
-DESCRIPTOR.message_types_by_name['ClientSessionChangedResponse'] = _CLIENTSESSIONCHANGEDRESPONSE
 DESCRIPTOR.message_types_by_name['ClientDetachedRequest'] = _CLIENTDETACHEDREQUEST
-DESCRIPTOR.message_types_by_name['ClientDetachedResponse'] = _CLIENTDETACHEDRESPONSE
 DESCRIPTOR.message_types_by_name['SessionRenamedRequest'] = _SESSIONRENAMEDREQUEST
-DESCRIPTOR.message_types_by_name['SessionRenamedResponse'] = _SESSIONRENAMEDRESPONSE
 DESCRIPTOR.message_types_by_name['SessionClosedRequest'] = _SESSIONCLOSEDREQUEST
-DESCRIPTOR.message_types_by_name['SessionClosedResponse'] = _SESSIONCLOSEDRESPONSE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 SetClientForXWindowIdRequest = _reflection.GeneratedProtocolMessageType('SetClientForXWindowIdRequest', (_message.Message,), {
@@ -466,26 +310,12 @@ SetClientForXWindowIdRequest = _reflection.GeneratedProtocolMessageType('SetClie
   })
 _sym_db.RegisterMessage(SetClientForXWindowIdRequest)
 
-SetClientForXWindowIdResponse = _reflection.GeneratedProtocolMessageType('SetClientForXWindowIdResponse', (_message.Message,), {
-  'DESCRIPTOR' : _SETCLIENTFORXWINDOWIDRESPONSE,
-  '__module__' : 'tmux_pb2'
-  # @@protoc_insertion_point(class_scope:trackd.SetClientForXWindowIdResponse)
-  })
-_sym_db.RegisterMessage(SetClientForXWindowIdResponse)
-
 ClearClientForXWindowIdRequest = _reflection.GeneratedProtocolMessageType('ClearClientForXWindowIdRequest', (_message.Message,), {
   'DESCRIPTOR' : _CLEARCLIENTFORXWINDOWIDREQUEST,
   '__module__' : 'tmux_pb2'
   # @@protoc_insertion_point(class_scope:trackd.ClearClientForXWindowIdRequest)
   })
 _sym_db.RegisterMessage(ClearClientForXWindowIdRequest)
-
-ClearClientForXWindowIdResponse = _reflection.GeneratedProtocolMessageType('ClearClientForXWindowIdResponse', (_message.Message,), {
-  'DESCRIPTOR' : _CLEARCLIENTFORXWINDOWIDRESPONSE,
-  '__module__' : 'tmux_pb2'
-  # @@protoc_insertion_point(class_scope:trackd.ClearClientForXWindowIdResponse)
-  })
-_sym_db.RegisterMessage(ClearClientForXWindowIdResponse)
 
 ClientSessionChangedRequest = _reflection.GeneratedProtocolMessageType('ClientSessionChangedRequest', (_message.Message,), {
   'DESCRIPTOR' : _CLIENTSESSIONCHANGEDREQUEST,
@@ -494,26 +324,12 @@ ClientSessionChangedRequest = _reflection.GeneratedProtocolMessageType('ClientSe
   })
 _sym_db.RegisterMessage(ClientSessionChangedRequest)
 
-ClientSessionChangedResponse = _reflection.GeneratedProtocolMessageType('ClientSessionChangedResponse', (_message.Message,), {
-  'DESCRIPTOR' : _CLIENTSESSIONCHANGEDRESPONSE,
-  '__module__' : 'tmux_pb2'
-  # @@protoc_insertion_point(class_scope:trackd.ClientSessionChangedResponse)
-  })
-_sym_db.RegisterMessage(ClientSessionChangedResponse)
-
 ClientDetachedRequest = _reflection.GeneratedProtocolMessageType('ClientDetachedRequest', (_message.Message,), {
   'DESCRIPTOR' : _CLIENTDETACHEDREQUEST,
   '__module__' : 'tmux_pb2'
   # @@protoc_insertion_point(class_scope:trackd.ClientDetachedRequest)
   })
 _sym_db.RegisterMessage(ClientDetachedRequest)
-
-ClientDetachedResponse = _reflection.GeneratedProtocolMessageType('ClientDetachedResponse', (_message.Message,), {
-  'DESCRIPTOR' : _CLIENTDETACHEDRESPONSE,
-  '__module__' : 'tmux_pb2'
-  # @@protoc_insertion_point(class_scope:trackd.ClientDetachedResponse)
-  })
-_sym_db.RegisterMessage(ClientDetachedResponse)
 
 SessionRenamedRequest = _reflection.GeneratedProtocolMessageType('SessionRenamedRequest', (_message.Message,), {
   'DESCRIPTOR' : _SESSIONRENAMEDREQUEST,
@@ -522,26 +338,12 @@ SessionRenamedRequest = _reflection.GeneratedProtocolMessageType('SessionRenamed
   })
 _sym_db.RegisterMessage(SessionRenamedRequest)
 
-SessionRenamedResponse = _reflection.GeneratedProtocolMessageType('SessionRenamedResponse', (_message.Message,), {
-  'DESCRIPTOR' : _SESSIONRENAMEDRESPONSE,
-  '__module__' : 'tmux_pb2'
-  # @@protoc_insertion_point(class_scope:trackd.SessionRenamedResponse)
-  })
-_sym_db.RegisterMessage(SessionRenamedResponse)
-
 SessionClosedRequest = _reflection.GeneratedProtocolMessageType('SessionClosedRequest', (_message.Message,), {
   'DESCRIPTOR' : _SESSIONCLOSEDREQUEST,
   '__module__' : 'tmux_pb2'
   # @@protoc_insertion_point(class_scope:trackd.SessionClosedRequest)
   })
 _sym_db.RegisterMessage(SessionClosedRequest)
-
-SessionClosedResponse = _reflection.GeneratedProtocolMessageType('SessionClosedResponse', (_message.Message,), {
-  'DESCRIPTOR' : _SESSIONCLOSEDRESPONSE,
-  '__module__' : 'tmux_pb2'
-  # @@protoc_insertion_point(class_scope:trackd.SessionClosedResponse)
-  })
-_sym_db.RegisterMessage(SessionClosedResponse)
 
 
 
@@ -552,8 +354,8 @@ _TMUX = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=746,
-  serialized_end=1247,
+  serialized_start=569,
+  serialized_end=1070,
   methods=[
   _descriptor.MethodDescriptor(
     name='set_client_for_x_window_id',

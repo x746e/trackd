@@ -1,3 +1,5 @@
+chrome_extension/dist/
+node_modules/
 grpc-web/
 trackd-venv/
 spans.db
