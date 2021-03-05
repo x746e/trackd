@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import logging
 import pprint
 import threading
 
@@ -138,6 +139,7 @@ class TmuxAdapter:
         self._span_tracker.update_active_span(session.session_name)
 
     def set_focused_x_window_id(self, x_window_id: x11.XWindowId) -> None:
+        logging.debug('set_focused_x_window_id(%r)', x_window_id)
         with self._lock:
             self._focused_x_window_id = x_window_id
             self._check_span()
@@ -146,6 +148,7 @@ class TmuxAdapter:
     # Methods for maintaining X Window ID ↔ tmux client mapping.
 
     def set_client_for_x_window_id(self, x_window_id: x11.XWindowId, client: TmuxClient) -> None:
+        logging.debug('set_client_for_x_window_id(%r, %r)', x_window_id, client)
         with self._lock:
             self._x_window_id_tmux_client_map[x_window_id] = client
             # TODO: At this point the client shouldn't have a corresponding TmuxSession.
@@ -153,6 +156,7 @@ class TmuxAdapter:
             self._check_span()
 
     def clear_client_for_x_window_id(self, x_window_id: x11.XWindowId) -> None:
+        logging.debug('clear_client_for_x_window_id(%r)', x_window_id)
         with self._lock:
             try:
                 client = self._x_window_id_tmux_client_map[x_window_id]
@@ -171,11 +175,13 @@ class TmuxAdapter:
     # Methods for maintaining tmux client ↔ session mapping.
 
     def client_session_changed(self, client: TmuxClient, session: TmuxSession) -> None:
+        logging.debug('client_session_changed(%r, %r)', client, session)
         with self._lock:
             self._tmux_client_session_map[client] = session
             self._check_span()
 
     def client_detached(self, client: TmuxClient) -> None:
+        logging.debug('client_detached(%r)', client)
         with self._lock:
             try:
                 del self._tmux_client_session_map[client]
@@ -184,11 +190,13 @@ class TmuxAdapter:
             self._check_span()
 
     def session_renamed(self, client: TmuxClient, new_session: TmuxSession) -> None:
+        logging.debug('session_renamed(%r, %r)', client, new_session)
         with self._lock:
             self._tmux_client_session_map.session_renamed(client, new_session)
             self._check_span()
 
     def session_closed(self, session: TmuxSession) -> None:
+        logging.debug('session_closed(%r)', session)
         with self._lock:
             self._tmux_client_session_map.session_closed(session)
             self._check_span()

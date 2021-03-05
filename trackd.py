@@ -8,6 +8,7 @@ import threading
 
 from typing import Iterable, Optional
 
+import absl.logging
 import grpc
 import tzlocal
 
@@ -117,7 +118,10 @@ class SpanStorage:
 
 
 def main():
-    logging.basicConfig()
+    handler = logging.StreamHandler()
+    handler.setFormatter(absl.logging.PythonFormatter())
+    logging.getLogger().addHandler(handler)
+    logging.getLogger().setLevel(logging.DEBUG)
 
     span_storage = SpanStorage('spans.db')
     span_tracker = SpanTracker(span_storage)
