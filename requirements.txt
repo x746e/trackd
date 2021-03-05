@@ -1,3 +1,4 @@
+absl-py
 click
 grpcio-tools
 pexpect
