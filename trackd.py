@@ -87,7 +87,6 @@ class SpanStorage:
         self._conn.commit()
 
     def add(self, span: Span) -> None:
-        print('add')
         with self._lock:
             c = self._conn.cursor()
             c.execute("""
