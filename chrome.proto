@@ -6,8 +6,20 @@ package trackd;
 
 service Chrome {
     rpc session_changed(SessionChangedRequest) returns (google.protobuf.Empty);
+
+    rpc set_session_for_window_id(SetSessionForWindowIdRequest) returns (google.protobuf.Empty);
+    rpc set_active_window(SetActiveWindowRequest) returns (google.protobuf.Empty);
 }
 
 message SessionChangedRequest {
     string session_name = 1;
+}
+
+message SetSessionForWindowIdRequest {
+    string session_name = 1;
+    int64 window_id = 2;
+}
+
+message SetActiveWindowRequest {
+    int64 window_id = 3;
 }
