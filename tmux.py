@@ -138,8 +138,8 @@ class TmuxAdapter:
 
         self._span_tracker.update_active_span(session.session_name)
 
-    def set_focused_x_window_id(self, x_window_id: x11.XWindowId) -> None:
-        logging.debug('set_focused_x_window_id(%r)', x_window_id)
+    def set_focused_x_window_id(self, x_window_id: x11.XWindowId, window_name: str) -> None:
+        # logging.debug('set_focused_x_window_id(%r, %r)', x_window_id, window_name)
         with self._lock:
             self._focused_x_window_id = x_window_id
             self._check_span()

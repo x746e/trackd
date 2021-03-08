@@ -51,6 +51,7 @@ class SpanTracker:
 
     def _emit(self) -> None:
         span = self._make_span()
+        logging.info('Emmiting %r', span)
         self._span_storage.add(span)
 
     def _make_span(self) -> Span:
@@ -118,26 +119,48 @@ class SpanStorage:
             yield Span(span_name=span_name, start=start, end=end)
 
 
-def main():
+def setup_logging():
     handler = logging.StreamHandler()
     handler.setFormatter(absl.logging.PythonFormatter())
-    logging.getLogger().addHandler(handler)
-    logging.getLogger().setLevel(logging.DEBUG)
+    root_logger = logging.getLogger()
+    root_logger.addHandler(handler)
+    root_logger.setLevel(logging.DEBUG)
 
-    span_storage = SpanStorage('spans.db')
-    span_tracker = SpanTracker(span_storage)
+    class Filter():
 
-    chrome_servicer = chrome.Chrome(span_tracker)
-    chrome_thread = threading.Thread(target=chrome.serve, args=(chrome_servicer,), daemon=True)
-    chrome_thread.start()
+        def filter(self, record):
+            return 'site-packages' not in record.pathname
 
-    tmux_adapter = tmux.TmuxAdapter(span_tracker)
+    handler.addFilter(Filter())
+
+
+def main():
+    setup_logging()
 
     x_window_focus_tracker = x11.XWindowFocusTracker()
-    x_window_focus_tracker.register(tmux_adapter.set_focused_x_window_id)
     x_thread = threading.Thread(target=x_window_focus_tracker.run, daemon=True)
     x_thread.start()
 
+    span_storage = SpanStorage('spans.db')
+    # We can't use the same tracker for both tmux and chrome.
+    # Otherwise, when e.g. focus is changed from chrome to terminal, it's
+    # possible that TmuxAdapter will get notified before ChromeAdapter;
+    # then TmuxAdapter will set the active span to current tmux session, just
+    # before ChromeAdapter sets the active span to None.
+    chrome_span_tracker = SpanTracker(span_storage)
+    tmux_span_tracker = SpanTracker(span_storage)
+
+    chrome_adapter = chrome.ChromeAdapter(chrome_span_tracker)
+    x_window_focus_tracker.register(chrome_adapter.set_focused_x_window_id)
+    chrome_http = chrome.Chrome(chrome_adapter)
+    chrome_thread = threading.Thread(target=chrome.serve, kwargs={
+        'chrome_http': chrome_http,
+        'port': 3142,
+    }, daemon=True)
+    chrome_thread.start()
+
+    tmux_adapter = tmux.TmuxAdapter(tmux_span_tracker)
+    x_window_focus_tracker.register(tmux_adapter.set_focused_x_window_id)
     tmux_servicer = tmux.Tmux(tmux_adapter)
 
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))

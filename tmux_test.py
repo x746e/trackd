@@ -74,7 +74,7 @@ class TmuxAdapterTest(unittest.TestCase):
         session = TmuxSession(session_name='session', hostname='host', server_pid=42)
         # Activate a session in the adapter.
         self.set_now(0)
-        self.adapter.set_focused_x_window_id(x_window_id)
+        self.adapter.set_focused_x_window_id(x_window_id, 'Terminal')
         self.adapter.set_client_for_x_window_id(x_window_id, client)
         self.adapter.client_session_changed(client, session)
 
@@ -96,7 +96,7 @@ class TmuxAdapterTest(unittest.TestCase):
         renamed_session = TmuxSession(session_name='renamed_session', hostname='host', server_pid=42)
         # Activate a session in the adapter.
         self.set_now(0)
-        self.adapter.set_focused_x_window_id(x_window_id)
+        self.adapter.set_focused_x_window_id(x_window_id, 'Terminal')
         self.adapter.set_client_for_x_window_id(x_window_id, client)
         self.adapter.client_session_changed(client, session)
 
@@ -117,7 +117,7 @@ class TmuxAdapterTest(unittest.TestCase):
         session = TmuxSession(session_name='session', hostname='host', server_pid=42)
         # Activate a session in the adapter.
         self.set_now(0)
-        self.adapter.set_focused_x_window_id(x_window_id)
+        self.adapter.set_focused_x_window_id(x_window_id, 'Terminal')
         self.adapter.set_client_for_x_window_id(x_window_id, client)
         self.adapter.client_session_changed(client, session)
 
@@ -139,7 +139,7 @@ class TmuxAdapterTest(unittest.TestCase):
         second_session = TmuxSession(session_name='second_session', hostname='host', server_pid=42)
         # Activate a session in the adapter.
         self.set_now(0)
-        self.adapter.set_focused_x_window_id(x_window_id)
+        self.adapter.set_focused_x_window_id(x_window_id, 'Terminal')
         self.adapter.set_client_for_x_window_id(x_window_id, client)
         self.adapter.client_session_changed(client, first_session)
 
@@ -160,7 +160,7 @@ class TmuxAdapterTest(unittest.TestCase):
         session = TmuxSession(session_name='session', hostname='host', server_pid=42)
         # Activate a session in the adapter.
         self.set_now(0)
-        self.adapter.set_focused_x_window_id(x_window_id)
+        self.adapter.set_focused_x_window_id(x_window_id, 'Terminal')
         self.adapter.set_client_for_x_window_id(x_window_id, client)
         self.adapter.client_session_changed(client, session)
 
@@ -181,14 +181,14 @@ class TmuxAdapterTest(unittest.TestCase):
         session = TmuxSession(session_name='session', hostname='host', server_pid=42)
         # Activate a session in the adapter.
         self.set_now(0)
-        self.adapter.set_focused_x_window_id(x_window_id)
+        self.adapter.set_focused_x_window_id(x_window_id, 'Terminal')
         self.adapter.set_client_for_x_window_id(x_window_id, client)
         self.adapter.client_session_changed(client, session)
 
         # X Window going out of focus should create a Span.
         duration = 120
         self.set_now(duration)
-        self.adapter.set_focused_x_window_id(x_window_id - 1)
+        self.adapter.set_focused_x_window_id(x_window_id - 1, 'Terminal')
 
         # Check the Span is there, and has the right name and duration.
         self.assertEqual(len(self.span_storage.spans), 1)

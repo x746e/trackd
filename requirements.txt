@@ -1,8 +1,8 @@
 absl-py
 click
+cherrypy
 grpcio-tools
 pexpect
 protobuf
 python-xlib
-sonora
 tzlocal

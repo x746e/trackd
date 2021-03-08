@@ -1,56 +1,51 @@
 'use strict';
 
-chrome.runtime.onInstalled.addListener(function() {
-    const {SessionChangedRequest} = require('./chrome_pb.js');
-    const {ChromeClient} = require('./chrome_grpc_web_pb.js');
 
-    function onFocusChanged(windowId) {
-        console.log(`${windowId} is focused`);
-
-        let groupId = windowToSessionMap.get(windowId);
-        chrome.tabGroups.get(groupId, group => {
-            console.log(`groupId: ${groupId}, group: ${group}`);
-        });
+function reportSesssionForWindow(windowId) {
+    console.log(`${(new Date()).toISOString()}: onFocusChanged(${windowId})`);
+    if (windowId == -1) {
+        sessionChanged(null);
+        return;
     }
 
-    chrome.windows.onFocusChanged.addListener(onFocusChanged);
-
-    let windowToSessionMap = new Map();
-    windowToSessionMap.set(-1, -1);
-
-    chrome.windows.getAll({populate: true}, windows => {
-        console.log(windows);
-
-        windowToSessionMap.clear();
-
-        for (let window_ of windows) {
-            for (let tab of window_.tabs) {
-                if (tab.groupId != -1) {
-                    windowToSessionMap.set(window_.id, tab.groupId);
-                    break;
-                }
+    chrome.windows.get(windowId, {populate: true}, window_ => {
+        for (let tab of window_.tabs) {
+            if (tab.groupId != -1) {
+                chrome.tabGroups.get(tab.groupId, group => {
+                    sessionChanged(group.title);
+                });
+                return;
             }
-            windowToSessionMap.set(window_.id, -2);
         }
-
-        // The assumption is that as we just started, the Chrome should still be focused.
-        // It may be good to check in trackd though that Chrome's XWindow is indeed focused
-        // when this plugin reports so.
-        windows.getLastFocused({}, window_ => {
-            onFocusChanged(window_.id);
-        });
+        sessionChanged('unnamed');
     });
 
+}
 
-    let client = new ChromeClient('http://localhost:3142', null, null);
 
-    let request = new SessionChangedRequest();
-    request.setSessionName('TestSession');
+function sessionChanged(session) {
+    chrome.identity.getProfileUserInfo(userInfo => {
+        let data = {
+            session_name: session,
+            user: userInfo.email,
+        };
 
-    client.session_changed(request, {}, (err, response) => {
-        if (err) {
-            console.log(`Unexpected error for sessionChange: code = ${err.code}` +
-                        `, message = "${err.message}"`);
-        }
+        console.log(`${(new Date()).toISOString()}: sessionChanged(${session})`);
+
+        fetch('http://localhost:3142/session_changed', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        }).then(response => response.json())
+            .then(json => {})
+            .catch(res => console.error(res));
     });
+}
+
+chrome.windows.onFocusChanged.addListener(reportSesssionForWindow);
+// The assumption is that as we just started, the Chrome should still be focused.
+// It may be good to check in trackd though that Chrome's XWindow is indeed focused
+// when this plugin reports so.
+chrome.windows.getLastFocused({}, window_ => {
+    reportSesssionForWindow(window_.id);
 });

@@ -16,6 +16,7 @@ class XWindowFocusTracker:
         self._disp = Display()
         self._current_window_id: Optional[XWindowId] = None
         self.NET_ACTIVE_WINDOW = self._disp.intern_atom('_NET_ACTIVE_WINDOW')
+        self.NET_WM_NAME = self._disp.intern_atom('_NET_WM_NAME')
 
     def register(self, callback: Callback) -> None:
         self._callbacks.append(callback)
@@ -42,5 +43,12 @@ class XWindowFocusTracker:
             return
         self._current_window_id = window_id
 
+        window_name = self._get_window_name(window_id)
+
         for callback in self._callbacks:
-            callback(window_id)
+            callback(window_id, window_name)
+
+    def _get_window_name(self, window_id: XWindowId) -> str:
+        window_obj = self._disp.create_resource_object('window', window_id)
+        window_name_property = window_obj.get_full_property(self.NET_WM_NAME, 0)
+        return window_name_property.value.decode('utf-8')

@@ -3,14 +3,14 @@
   "version": "1.0",
   "description": "A extension for work tracking",
   "permissions": [
-    "activeTab",
-    "declarativeContent",
+    "identity",
+    "identity.email",
     "sessions",
-    "storage",
+    "tabs",
     "tabGroups"
   ],
   "background": {
-    "service_worker": "main.js"
+    "service_worker": "client_chrome.js"
   },
   "manifest_version": 3
 }
