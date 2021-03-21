@@ -73,6 +73,9 @@ class Chrome():
 
 def serve(chrome_http: Chrome, port: int):
     cherrypy.config.update({
+        'global': {'engine.autoreload.on' : False},
+    })
+    cherrypy.config.update({
 	'server.socket_port': port,
 	'tools.response_headers.on': True,
 	'tools.response_headers.headers': [
