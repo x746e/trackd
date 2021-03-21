@@ -14,8 +14,9 @@ class SpanStoreTest(unittest.TestCase):
     def test_retrieves_same_as_saved(self):
         storage = trackd.SpanStorage(db_path=':memory:')
         now = trackd.now()
+        session = trackd.tmux.TmuxSession(session_name='foo', hostname='host', server_pid=42)
         span = trackd.Span(
-                span_name='span',
+                session=session,
                 start=now,
                 end=now + datetime.timedelta(minutes=5),
         )

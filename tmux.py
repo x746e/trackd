@@ -127,16 +127,16 @@ class TmuxAdapter:
 
     def _check_span(self):
         if self._focused_x_window_id not in self._x_window_id_tmux_client_map:
-            self._span_tracker.update_active_span(None)
+            self._span_tracker.update_active_session(None)
             return
         client = self._x_window_id_tmux_client_map[self._focused_x_window_id]
 
         if client not in self._tmux_client_session_map:
-            self._span_tracker.update_active_span(None)
+            self._span_tracker.update_active_session(None)
             return
         session = self._tmux_client_session_map[client]
 
-        self._span_tracker.update_active_span(session.session_name)
+        self._span_tracker.update_active_session(session)
 
     def set_focused_x_window_id(self, x_window_id: x11.XWindowId, window_name: str) -> None:
         # logging.debug('set_focused_x_window_id(%r, %r)', x_window_id, window_name)

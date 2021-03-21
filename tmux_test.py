@@ -86,7 +86,7 @@ class TmuxAdapterTest(unittest.TestCase):
         # Check the Span is there, and has the right name and duration.
         self.assertEqual(len(self.span_storage.spans), 1)
         (span,) = self.span_storage.spans
-        self.assertEqual(span.span_name, session.session_name)
+        self.assertEqual(span.session, session)
         self.assertEqual((span.end - span.start).total_seconds(), duration)
 
     def test_session_renamed(self):
@@ -108,7 +108,7 @@ class TmuxAdapterTest(unittest.TestCase):
         # Check the Span is there, and has the right name and duration.
         self.assertEqual(len(self.span_storage.spans), 1)
         (span,) = self.span_storage.spans
-        self.assertEqual(span.span_name, session.session_name)
+        self.assertEqual(span.session, session)
         self.assertEqual((span.end - span.start).total_seconds(), duration)
 
     def test_client_detached(self):
@@ -129,7 +129,7 @@ class TmuxAdapterTest(unittest.TestCase):
         # Check the Span is there, and has the right name and duration.
         self.assertEqual(len(self.span_storage.spans), 1)
         (span,) = self.span_storage.spans
-        self.assertEqual(span.span_name, session.session_name)
+        self.assertEqual(span.session, session)
         self.assertEqual((span.end - span.start).total_seconds(), duration)
 
     def test_client_session_changed(self):
@@ -151,7 +151,7 @@ class TmuxAdapterTest(unittest.TestCase):
         # Check the Span is there, and has the right name and duration.
         self.assertEqual(len(self.span_storage.spans), 1)
         (span,) = self.span_storage.spans
-        self.assertEqual(span.span_name, first_session.session_name)
+        self.assertEqual(span.session, first_session)
         self.assertEqual((span.end - span.start).total_seconds(), duration)
 
     def test_clear_client_for_x_window_id(self):
@@ -172,7 +172,7 @@ class TmuxAdapterTest(unittest.TestCase):
         # Check the Span is there, and has the right name and duration.
         self.assertEqual(len(self.span_storage.spans), 1)
         (span,) = self.span_storage.spans
-        self.assertEqual(span.span_name, session.session_name)
+        self.assertEqual(span.session, session)
         self.assertEqual((span.end - span.start).total_seconds(), duration)
 
     def test_set_focused_x_window_id(self):
@@ -193,7 +193,7 @@ class TmuxAdapterTest(unittest.TestCase):
         # Check the Span is there, and has the right name and duration.
         self.assertEqual(len(self.span_storage.spans), 1)
         (span,) = self.span_storage.spans
-        self.assertEqual(span.span_name, session.session_name)
+        self.assertEqual(span.session, session)
         self.assertEqual((span.end - span.start).total_seconds(), duration)
 
 

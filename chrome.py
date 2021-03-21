@@ -27,13 +27,13 @@ class ChromeAdapter:
 
     def _check_span(self):
         if self._current_session is None:
-            self._span_tracker.update_active_span(None)
+            self._span_tracker.update_active_session(None)
             return
         if not self._chrome_is_focused:
-            self._span_tracker.update_active_span(None)
+            self._span_tracker.update_active_session(None)
             return
 
-        self._span_tracker.update_active_span(self._current_session.session_name)
+        self._span_tracker.update_active_session(self._current_session)
 
     def session_changed(self, session: ChromeSession) -> None:
         logging.debug(f'ChromeAdapter.session_changed({session!r})')
