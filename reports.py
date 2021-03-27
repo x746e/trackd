@@ -1,32 +1,16 @@
 
 ## Spans
-# - output:
 # == Tue, Mar 16
 # 10:11   [nw] trackd (10m)
 # 10:21   [w] iptables_audit (1h)
 
-## Per day report
-# == Tue, Mar 16:
-# [w] iptables_audit   2h
-# [w] chat             1h
-# [w] meetings         3h
-# [nw] trackd          30m
-# == Wed, Mar 17
-# ...
-
-## Week report
-# == Mar 15 -- Mar 21:
-# [w] iptables_audit   20h
-# [w] chat             10h
-
-
-## Work hours report:
-# = Mar 15 -- Mar 21:
-# work hours: 30
-# non-work hours: 10
-#
+## Text calendar
 # == Tue, Mar 16
-# 09:00--10:15
+# 08:00  iptables_audit [30m]
+# 08:30  iptables_audit [20m], chat [5m]
+# 09:00
+# 09:30
+# 10:00
 
 from dataclasses import dataclass
 from collections import defaultdict
@@ -35,15 +19,24 @@ from pprint import pprint
 import datetime
 import os.path
 
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Union
 
 import click
 import click_config_file
 
-from time_utils import duration, humanize
+from time_utils import duration, hours
 import trackd
 import chrome
 import tmux
+
+
+@dataclass(frozen=True)
+class SpanConvertOptions:
+    """Defines how to convert raw trackd.Spans into ReportSpans."""
+    hostname_work: str
+    hostname_non_work: str
+    chrome_user_work: str
+    chrome_user_non_work: str
 
 
 class SpanType(Enum):
@@ -68,18 +61,25 @@ class ReportSpan:
         return f'{type_} {str(self.name): <20} {duration} ({self.start} -- {self.end})'
 
     def length(self):
-        return (self.end - self.start).total_seconds()
+        return int((self.end - self.start).total_seconds())
 
 
 @dataclass(frozen=True)
-class Options:
-    hostname_work: str
-    hostname_non_work: str
-    chrome_user_work: str
-    chrome_user_non_work: str
+class ReportKey:
+    """Represents spans in time based reporting.
+
+    Basically ReportSpan without start and end.
+    """
+    name: str
+    type_: SpanType
+
+    def __repr__(self):
+        type_ = '[w] ' if self.type_ is SpanType.WORK else '[nw]'
+        return f'{type_} {str(self.name): <20}'
 
 
-def split_work_non_work(opts: Options, raw_spans: Iterable[trackd.Span]) -> Iterable[ReportSpan]:
+def split_work_non_work(opts: SpanConvertOptions,
+                        raw_spans: Iterable[trackd.Span]) -> Iterable[ReportSpan]:
     """Transforms into work/non-work spans."""
     for span in raw_spans:
         if isinstance(span.session, tmux.TmuxSession):
@@ -137,7 +137,7 @@ def cull(spans: Iterable[ReportSpan], min_length: int = 3) -> Iterable[ReportSpa
             yield span
 
 
-def get_spans(opts: Options):
+def get_spans(opts: SpanConvertOptions):
     span_storage = trackd.SpanStorage('spans.db')
     raw_spans = span_storage.query()
     spans = split_work_non_work(opts, raw_spans)
@@ -146,9 +146,9 @@ def get_spans(opts: Options):
     return merge(spans)
 
 
-def per_dey_report(opts: Options) -> None:
+def per_day_report(opts: SpanConvertOptions) -> None:
 
-    min_length = duration('10m')
+    min_length = duration('7m')
 
     def split_day(spans: Iterable[ReportSpan]) -> Iterable[ReportSpan]:
         """Splits a span going over midnight into two."""
@@ -167,38 +167,89 @@ def per_dey_report(opts: Options) -> None:
             else:
                 yield span
 
-
-    @dataclass(frozen=True)
-    class ReportKey:
-        """Represents spans in time based reporting.
-
-        Basically ReportSpan without start and end.
-        """
-        name: str
-        type_: SpanType
-
-        def __repr__(self):
-            type_ = '[w] ' if self.type_ is SpanType.WORK else '[nw]'
-            return f'{type_} {str(self.name): <20}'
-
-
     def make_key(span: ReportSpan) -> ReportKey:
         return ReportKey(name=span.name, type_=span.type_)
 
-
     spans = list(get_spans(opts))
     spans = split_day(spans)
-    per_day = defaultdict(lambda: defaultdict(int))
+    per_day_per_w_nw = defaultdict(lambda: defaultdict(int))
+    per_day_per_project = defaultdict(lambda: defaultdict(int))
+    workday_start = {}
+    workday_end = {}
     for span in spans:
-        per_day[span.start.date()][make_key(span)] += span.length()
+        per_day_per_w_nw[span.start.date()][span.type_] += span.length()
+        per_day_per_project[span.start.date()][make_key(span)] += span.length()
+        if span.type_ == SpanType.WORK and span.length() > min_length:
+            day = span.start.date()
+            if day not in workday_start:
+               workday_start[day] = span.start.time()
+            if day not in workday_end or span.end.time() > workday_end[day]:
+                workday_end[day] = span.end.time()
 
-    for day, day_report in per_day.items():
-        print(f'== {day:%a, %b %d}')
+    for day, day_report in per_day_per_project.items():
+        print(f'\n== {day:%a, %b %d}')
+        work_hours = hours(per_day_per_w_nw[day][SpanType.WORK])
+        non_work_hours = hours(per_day_per_w_nw[day][SpanType.NON_WORK])
+        print(f'Σ: w={work_hours}, nw={non_work_hours}')
+        if day in workday_start:
+            assert day in workday_end
+            day_start = workday_start[day].strftime('%H:%M')
+            day_end = workday_end[day].strftime('%H:%M')
+            print(f'work day: {day_start}—{day_end}')
+        print()
         itms = sorted(day_report.items(), key=lambda itm: itm[1], reverse=True)
         for k, length in itms:
             if length < min_length:
                 continue
-            print(k, humanize(length))
+            print(k, hours(length))
+
+
+def per_week_report(opts: SpanConvertOptions) -> None:
+
+    min_length = duration('7m')
+
+    def get_week(dt: Union[datetime.datetime, datetime.date]) -> int:
+        _, week, _ = dt.isocalendar()
+        return week
+
+    def format_week(week: int) -> str:
+        # XXX TODO: Take the year out of actual spans.
+        # I won't need it before 2022 though.
+        year = datetime.datetime.now().year
+        week_start = datetime.date.fromisocalendar(year, week, day=1)
+        week_end = datetime.date.fromisocalendar(year, week, day=7)
+        return f'{week_start:%b %d} — {week_end:%b %d}'
+
+    def split_week(spans: Iterable[ReportSpan]) -> Iterable[ReportSpan]:
+        """Splits a span going over Sunday → Monday midnight into two."""
+        for span in spans:
+            assert span.length() < duration('7d')
+            if get_week(span.start) != get_week(span.end):
+                raise NotImplementedError
+            yield span
+
+    def make_key(span: ReportSpan) -> ReportKey:
+        return ReportKey(name=span.name, type_=span.type_)
+
+    spans = list(get_spans(opts))
+    spans = split_week(spans)
+    per_week_per_w_nw = defaultdict(lambda: defaultdict(int))
+    per_week_per_project = defaultdict(lambda: defaultdict(int))
+    for span in spans:
+        per_week_per_w_nw[get_week(span.start)][span.type_] += span.length()
+        per_week_per_project[get_week(span.start)][make_key(span)] += span.length()
+
+    for week, week_report in per_week_per_project.items():
+        print(f'\n== {format_week(week)}')
+        work_hours = hours(per_week_per_w_nw[week][SpanType.WORK])
+        non_work_hours = hours(per_week_per_w_nw[week][SpanType.NON_WORK])
+        print(f'Σ: w={work_hours}, nw={non_work_hours}')
+        print()
+        itms = sorted(week_report.items(), key=lambda itm: itm[1], reverse=True)
+        for k, length in itms:
+            if length < min_length:
+                continue
+            print(k, hours(length))
 
 
 
@@ -213,10 +264,11 @@ CONFIG_FILE = os.path.expanduser('~/trackctl.conf')
 @click.pass_context
 def cli(ctx, hostname_work, hostname_non_work, chrome_user_work, chrome_user_non_work):
     ctx.ensure_object(dict)
-    ctx.obj['options'] = Options(hostname_work=hostname_work,
-                                 hostname_non_work=hostname_non_work,
-                                 chrome_user_work=chrome_user_work,
-                                 chrome_user_non_work=chrome_user_non_work)
+    ctx.obj['options'] = SpanConvertOptions(
+            hostname_work=hostname_work,
+            hostname_non_work=hostname_non_work,
+            chrome_user_work=chrome_user_work,
+            chrome_user_non_work=chrome_user_non_work)
 
 
 @cli.command()
@@ -231,7 +283,14 @@ def spans(ctx):
 @click.pass_context
 def per_day(ctx):
     opts = ctx.obj['options']
-    per_dey_report(opts)
+    per_day_report(opts)
+
+
+@cli.command()
+@click.pass_context
+def per_week(ctx):
+    opts = ctx.obj['options']
+    per_week_report(opts)
 
 
 if __name__ == '__main__':
