@@ -1,5 +1,6 @@
 absl-py
 click
+click-config-file
 cherrypy
 grpcio-tools
 pexpect
