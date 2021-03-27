@@ -21,10 +21,15 @@
 
 
 ## Work hours report:
+# = Mar 15 -- Mar 21:
+# work hours: 30
+# non-work hours: 10
+#
 # == Tue, Mar 16
 # 09:00--10:15
 
 from dataclasses import dataclass
+from collections import defaultdict
 from enum import Enum
 from pprint import pprint
 import datetime
@@ -35,6 +40,7 @@ from typing import Iterable, Optional
 import click
 import click_config_file
 
+from time_utils import duration, humanize
 import trackd
 import chrome
 import tmux
@@ -47,6 +53,10 @@ class SpanType(Enum):
 
 @dataclass(frozen=True)
 class ReportSpan:
+    """Represents a span in a more convenient format for reporting.
+
+    Essentially processes tmux/chrome specific metadata into work/non-work distinction.
+    """
     name: str
     type_: SpanType
     start: datetime.datetime
@@ -136,8 +146,63 @@ def get_spans(opts: Options):
     return merge(spans)
 
 
-CONFIG_FILE = os.path.expanduser('~/trackctl.conf')
+def per_dey_report(opts: Options) -> None:
 
+    min_length = duration('10m')
+
+    def split_day(spans: Iterable[ReportSpan]) -> Iterable[ReportSpan]:
+        """Splits a span going over midnight into two."""
+        for span in spans:
+            assert span.length() < duration('1d')
+
+            if span.start.date() != span.end.date():
+                second_start = span.end.replace(hour=0, second=0, minute=0, microsecond=0)
+                assert second_start != span.end
+                first_end = second_start - datetime.timedelta(microseconds=1)
+
+                yield ReportSpan(name=span.name, type_=span.type_,
+                                 start=span.start, end=first_end)
+                yield ReportSpan(name=span.name, type_=span.type_,
+                                 start=second_start, end=span.end)
+            else:
+                yield span
+
+
+    @dataclass(frozen=True)
+    class ReportKey:
+        """Represents spans in time based reporting.
+
+        Basically ReportSpan without start and end.
+        """
+        name: str
+        type_: SpanType
+
+        def __repr__(self):
+            type_ = '[w] ' if self.type_ is SpanType.WORK else '[nw]'
+            return f'{type_} {str(self.name): <20}'
+
+
+    def make_key(span: ReportSpan) -> ReportKey:
+        return ReportKey(name=span.name, type_=span.type_)
+
+
+    spans = list(get_spans(opts))
+    spans = split_day(spans)
+    per_day = defaultdict(lambda: defaultdict(int))
+    for span in spans:
+        per_day[span.start.date()][make_key(span)] += span.length()
+
+    for day, day_report in per_day.items():
+        print(f'== {day:%a, %b %d}')
+        itms = sorted(day_report.items(), key=lambda itm: itm[1], reverse=True)
+        for k, length in itms:
+            if length < min_length:
+                continue
+            print(k, humanize(length))
+
+
+
+CONFIG_FILE = os.path.expanduser('~/trackctl.conf')
 
 @click.group()
 @click.option('--hostname_work', required=True)
@@ -157,7 +222,16 @@ def cli(ctx, hostname_work, hostname_non_work, chrome_user_work, chrome_user_non
 @cli.command()
 @click.pass_context
 def spans(ctx):
-    pprint(list(get_spans(ctx.obj['options'])))
+    opts = ctx.obj['options']
+    spans = list(get_spans(opts))
+    pprint(spans)
+
+
+@cli.command()
+@click.pass_context
+def per_day(ctx):
+    opts = ctx.obj['options']
+    per_dey_report(opts)
 
 
 if __name__ == '__main__':
