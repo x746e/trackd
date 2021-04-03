@@ -13,7 +13,7 @@ from pprint import pprint
 import datetime
 import os.path
 
-from typing import Iterable, Optional, Union
+from typing import Iterable, Optional, Tuple, Union
 
 import click
 import click_config_file
@@ -50,7 +50,10 @@ class ReportSpan:
     start: datetime.datetime
     end: datetime.datetime
 
-    def __repr__(self):  # XXX: Make it __str__?
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.name!r}, {self.type_}, start='{self.start:%H:%M:%S}', end='{self.end:%H:%M:%S}')"
+
+    def __str__(self):
         type_ = '[w] ' if self.type_ is SpanType.WORK else '[nw]'
         duration = self.end - self.start
         duration = datetime.timedelta(seconds=int(duration.total_seconds()))
@@ -69,9 +72,13 @@ class ReportKey:
     name: str
     type_: SpanType
 
-    def __repr__(self):
+    def __str__(self):
         type_ = '[w] ' if self.type_ is SpanType.WORK else '[nw]'
         return f'{type_} {self.name: <20}'
+
+
+def make_key(span: ReportSpan) -> ReportKey:
+    return ReportKey(name=span.name, type_=span.type_)
 
 
 def split_work_non_work(opts: Options,
@@ -149,7 +156,6 @@ def spans_report(opts: Options):
             current_day = span.start.date()
             print(f'== {current_day:%a, %b %d}')
         print(span)
-        # print(f'{span.start:%H:%M} {span.name: <}')
 
 
 def per_day_report(opts: Options) -> None:
@@ -170,9 +176,6 @@ def per_day_report(opts: Options) -> None:
                                  start=second_start, end=span.end)
             else:
                 yield span
-
-    def make_key(span: ReportSpan) -> ReportKey:
-        return ReportKey(name=span.name, type_=span.type_)
 
     spans = list(get_spans(opts))
     spans = split_day(spans)
@@ -230,14 +233,9 @@ def per_week_report(opts: Options) -> None:
                 raise NotImplementedError
             yield span
 
-    def make_key(span: ReportSpan) -> ReportKey:
-        return ReportKey(name=span.name, type_=span.type_)
-
-    spans = list(get_spans(opts))
-    spans = split_week(spans)
     per_week_per_w_nw = defaultdict(lambda: defaultdict(int))
     per_week_per_project = defaultdict(lambda: defaultdict(int))
-    for span in spans:
+    for span in split_week(get_spans(opts)):
         per_week_per_w_nw[get_week(span.start)][span.type_] += span.length()
         per_week_per_project[get_week(span.start)][make_key(span)] += span.length()
 
@@ -252,6 +250,76 @@ def per_week_report(opts: Options) -> None:
             if length < opts.min_length:
                 continue
             print(k, hours(length))
+
+
+def calendar_report(opts: Options) -> None:
+
+    def format_item(key, length):
+        type_ = '[w] ' if key.type_ is SpanType.WORK else '[nw]'
+        return f'{type_} {key.name} ({humanize(length)})'
+
+    split_point = duration('30m')  # split into 30m chunks.
+    spans = get_spans(opts)
+    per_day_per_interval_per_project = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
+    for interval_start, span in _split_into_chunks(spans, split_point=split_point):
+        per_day_per_interval_per_project[
+            interval_start.date()][interval_start.time()][make_key(span)] += span.length()
+
+    for day, day_report in per_day_per_interval_per_project.items():
+        print(f'== {day:%a, %b %d}')
+        for period, period_report in day_report.items():
+            items = filter(lambda item: item[1] >= opts.min_length, period_report.items())
+            items = sorted(items, key=lambda item: item[1], reverse=True)
+            if not items:
+                continue
+            formatted = ', '.join(format_item(key, length) for key, length in items)
+            print(f'{period:%H:%M}  {formatted}')
+
+
+def _split_into_chunks(spans: Iterable[ReportSpan],
+                       split_point: int) -> Iterable[Tuple[datetime.datetime, ReportSpan]]:
+    """Splits spans into chunks falling into `split_point`-sized intervals.
+    """
+    spans = list(spans)
+    # May be worth asserting here that spans are sorted and non-overlaping.
+    start = spans[0].start.timestamp()
+    start = start - (start % split_point)
+    end = spans[-1].end.timestamp()
+    end = end + (split_point - end % split_point)
+
+    n_intervals = (end - start) // split_point
+    spans_itr = iter(spans)
+    span = next(spans_itr)
+
+    i = 0
+    while True:
+        if i >= n_intervals:
+            assert not list(spans_itr)
+            return
+        interval_start = datetime.datetime.fromtimestamp(start + split_point * i)
+        interval_start = interval_start.replace(tzinfo=span.start.tzinfo)
+        interval_end = datetime.datetime.fromtimestamp(start + split_point * (i + 1))
+        interval_end = interval_end.replace(tzinfo=span.start.tzinfo)
+        assert interval_start <= span.start
+        if span.start >= interval_end:
+            i += 1
+            continue
+        if span.end <= interval_end:
+            yield interval_start, span
+            try:
+                span = next(spans_itr)
+            except StopIteration:
+                return
+            continue
+
+        assert interval_start <= span.start <= interval_end <= span.end
+        assert interval_end <= span.end
+
+        yield interval_start, ReportSpan(name=span.name, type_=span.type_,
+                                         start=span.start, end=interval_end)
+        span = ReportSpan(name=span.name, type_=span.type_,
+                          start=interval_end, end=span.end)
+        i += 1
 
 
 CONFIG_FILE = os.path.expanduser('~/trackctl.conf')
@@ -295,6 +363,13 @@ def per_day(ctx):
 def per_week(ctx):
     opts = ctx.obj['options']
     per_week_report(opts)
+
+
+@cli.command()
+@click.pass_context
+def calendar(ctx):
+    opts = ctx.obj['options']
+    calendar_report(opts)
 
 
 if __name__ == '__main__':
