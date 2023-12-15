@@ -20,6 +20,16 @@ class ChromeStub(object):
                 request_serializer=chrome__pb2.SessionChangedRequest.SerializeToString,
                 response_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
                 )
+        self.set_session_for_window_id = channel.unary_unary(
+                '/trackd.Chrome/set_session_for_window_id',
+                request_serializer=chrome__pb2.SetSessionForWindowIdRequest.SerializeToString,
+                response_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+                )
+        self.set_active_window = channel.unary_unary(
+                '/trackd.Chrome/set_active_window',
+                request_serializer=chrome__pb2.SetActiveWindowRequest.SerializeToString,
+                response_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+                )
 
 
 class ChromeServicer(object):
@@ -31,12 +41,34 @@ class ChromeServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def set_session_for_window_id(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def set_active_window(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_ChromeServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'session_changed': grpc.unary_unary_rpc_method_handler(
                     servicer.session_changed,
                     request_deserializer=chrome__pb2.SessionChangedRequest.FromString,
+                    response_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+            ),
+            'set_session_for_window_id': grpc.unary_unary_rpc_method_handler(
+                    servicer.set_session_for_window_id,
+                    request_deserializer=chrome__pb2.SetSessionForWindowIdRequest.FromString,
+                    response_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+            ),
+            'set_active_window': grpc.unary_unary_rpc_method_handler(
+                    servicer.set_active_window,
+                    request_deserializer=chrome__pb2.SetActiveWindowRequest.FromString,
                     response_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
             ),
     }
@@ -62,6 +94,40 @@ class Chrome(object):
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/trackd.Chrome/session_changed',
             chrome__pb2.SessionChangedRequest.SerializeToString,
+            google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def set_session_for_window_id(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/trackd.Chrome/set_session_for_window_id',
+            chrome__pb2.SetSessionForWindowIdRequest.SerializeToString,
+            google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def set_active_window(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/trackd.Chrome/set_active_window',
+            chrome__pb2.SetActiveWindowRequest.SerializeToString,
             google_dot_protobuf_dot_empty__pb2.Empty.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
