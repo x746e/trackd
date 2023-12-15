@@ -331,7 +331,7 @@ CONFIG_FILE = os.path.expanduser('~/trackctl.conf')
 @click.option('--chrome_user_non_work', required=True)
 @click.option('--min_length', required=True,
               help="Don't report spans sum of which is shorter than this.",
-              default=duration('7m'))
+              default='7m')
 @click_config_file.configuration_option(config_file_name=CONFIG_FILE)
 @click.pass_context
 def cli(ctx, hostname_work, hostname_non_work, chrome_user_work, chrome_user_non_work, min_length):
@@ -341,7 +341,7 @@ def cli(ctx, hostname_work, hostname_non_work, chrome_user_work, chrome_user_non
             hostname_non_work=hostname_non_work,
             chrome_user_work=chrome_user_work,
             chrome_user_non_work=chrome_user_non_work,
-            min_length=min_length)
+            min_length=duration(min_length))
 
 
 @cli.command()
