@@ -1,3 +1,23 @@
+"""Tracks activity in tmux and Chrome.
+
+Main classes:
+    - Span: a span of work.  Consists of a "session" name -- any project or activity,
+      and start/end times.  Every time you switch from a Chrome window marked as
+      belonging to a project to something else, a new `Span` is saved to the storage.
+    - SpanStorage: has an `add(Span)` method and a `query()` method.
+    - SpanTracker: the object that knows the name of the active session, and that is
+      being notified when the active session changes.  When that happens, creates
+      a new `Span` and saves it into `SpanStorage`.
+    - (Chrome|Tmux)Adapter: get notified when, respectively, a Chrome window tagged,
+      with a tab group or a tmux session chages, and notifies a `SpanTracker`.
+
+ChromeAdapter is using a web server that gets HTTP requests from a special Chrome
+extension when a Chrome window gets or loses focus.
+
+TmuxAdapter is using a gRPC server that gets called from tmux hooks.  Plus it
+watches for X Windows focused window to track when a terminal with tmux is in
+focus.
+"""
 from dataclasses import dataclass
 from concurrent import futures
 import datetime
