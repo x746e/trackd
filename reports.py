@@ -27,8 +27,8 @@ import tmux
 @dataclass(frozen=True)
 class Options:
     # How to convert tmux/chrome metadata into work/non-work.
-    hostname_work: str
-    hostname_non_work: str
+    hostnames_work: str
+    hostnames_non_work: str
     chrome_user_work: str
     chrome_user_non_work: str
     # Don't report spans sum of which is shorter than this.
@@ -86,10 +86,12 @@ def split_work_non_work(opts: Options,
     """Transforms into work/non-work spans."""
     for span in raw_spans:
         if isinstance(span.session, tmux.TmuxSession):
-            assert span.session.hostname in (opts.hostname_work, opts.hostname_non_work)
-            if span.session.hostname == opts.hostname_work:
+            if span.session.hostname not in (opts.hostnames_work + opts.hostnames_non_work):
+                raise RuntimeError(f"The span's hostname, {span.session.hostname!r}, isn't in "
+                                   f"{opts.hostnames_work!r} or {opts.hostnames_non_work!r}")
+            if span.session.hostname in opts.hostnames_work:
                 type_ = SpanType.WORK
-            elif span.session.hostname == opts.hostname_non_work:
+            elif span.session.hostname in opts.hostnames_non_work:
                 type_ = SpanType.NON_WORK
             else:
                 raise RuntimeError(f'Unexpected hostname in TmuxSession: {span.session.hostname!r}')
@@ -325,8 +327,8 @@ def _split_into_chunks(spans: Iterable[ReportSpan],
 CONFIG_FILE = os.path.expanduser('~/trackctl.conf')
 
 @click.group()
-@click.option('--hostname_work', required=True)
-@click.option('--hostname_non_work', required=True)
+@click.option('--hostnames_work', required=True, multiple=True)
+@click.option('--hostnames_non_work', required=True, multiple=True)
 @click.option('--chrome_user_work', required=True)
 @click.option('--chrome_user_non_work', required=True)
 @click.option('--min_length', required=True,
@@ -334,11 +336,11 @@ CONFIG_FILE = os.path.expanduser('~/trackctl.conf')
               default='7m')
 @click_config_file.configuration_option(config_file_name=CONFIG_FILE)
 @click.pass_context
-def cli(ctx, hostname_work, hostname_non_work, chrome_user_work, chrome_user_non_work, min_length):
+def cli(ctx, hostnames_work, hostnames_non_work, chrome_user_work, chrome_user_non_work, min_length):
     ctx.ensure_object(dict)
     ctx.obj['options'] = Options(
-            hostname_work=hostname_work,
-            hostname_non_work=hostname_non_work,
+            hostnames_work=hostnames_work,
+            hostnames_non_work=hostnames_non_work,
             chrome_user_work=chrome_user_work,
             chrome_user_non_work=chrome_user_non_work,
             min_length=duration(min_length))
